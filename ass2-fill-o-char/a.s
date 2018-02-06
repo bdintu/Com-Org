@@ -1,7 +1,10 @@
 .MODEL tiny
 
 .DATA
-	xory	db
+	xory	db		; direction level 2 {
+					;	0 : Top to Down | Down to TOP
+					;	1 : Left to Rigth | Rigth to Left
+					; }
 
 .CODE
 ORG 100h
@@ -9,11 +12,11 @@ ORG 100h
 MAIN:
 
 INIT:
-	mov xory, 0
-	mov ch, 0
-	mov cl, 0	
-	mov dh, 0
-	mov dl, 0
+	mov xory, 0		; set xory
+	mov ch, 0		; direction y (0: top to down, 1: down to top)
+	mov cl, 0		; direction x (0: left to right, 1: right to left)
+	mov dh, 0		; position cursor y-axis
+	mov dl, 0		; position cursor x-axis
 
 CLS:
 	mov ah, 0h		; Clear Screen
@@ -21,13 +24,13 @@ CLS:
 	int 10h
 
 SET_POS:
-	mov ah, 02h		; Set Position
+	mov ah, 02h		; Set Cursor
 	int 10h
 
 WRITE_CHAR:
-	push cx
-	mov ah, 0ah
-	mov al, 4fh
+	push cx			
+	mov ah, 0ah		; Write char om cursor
+	mov al, 4fh		; 'O'
 	mov bh, 0h
 	mov cx, 01h
 	int 10h
@@ -36,76 +39,75 @@ WRITE_CHAR:
 DELAY:
 	push dx
 	push cx
-	mov ah, 86h
+	mov ah, 86h		; delay
 	mov cx, 0h
 	mov dx, 2710h
 	int 15h
 	pop cx
 	pop dx
 	
-CHK_XORY:
-	cmp xory, 0
-	jz CHK_X
-	jmp CHK_Y
+CHK_XORY:			; check direction level 2
+	cmp xory, 0		; if xory = 0 
+	jz CHK_X		;	check x-axis
+					; else
+	jmp CHK_Y		;	check y-axis
 
-CHK_X:				; check direct x
-	cmp cl, 0		; if xdt = 0 (left -> right)
+CHK_X:				; check direct x-axis
+	cmp cl, 0		; if dir-x = 0 (left -> right)
 	jz INC_X		;	INC_X
-	jmp DEC_X		; else (1) (right -> left)
-					;	DEC_X
+					; else (right to left)
+	jmp DEC_X		;	DEC_X
 
-CHK_Y:
-	cmp ch, 0		; if ydt = 0 (top -> down)
+CHK_Y:				; check direction y-axis
+	cmp ch, 0		; if dir-y = 0 (top -> down)
 	jz INC_Y		;	INC_Y
-	jmp DEC_Y		; else (down to top)
-					;	DEC_Y
+					; else (down to top)
+	jmp DEC_Y		;	DEC_Y
 
 INC_X:
 	cmp dl, 79		; if x = 79
-	je CHK_Y		;	CHK_Y (check Y-axis)
+	je CHK_Y		;	check y-axis
 					; else
 	inc dl			;	x++
-
-	cmp xory, 1
-	je XOR_Y
-	jmp SET_POS
+	jmp CHK_XORY_Y	;	check xory y-axis
 
 DEC_X:
 	cmp dl, 0		; if x = 0
-	je CHK_Y		;	CHK_Y (checkY-axis)
+	je CHK_Y		;	check y-axis
 					; else
 	dec dl			;	x--
-
-	cmp xory, 1
-	je XOR_Y
-	jmp SET_POS
+	jmp CHK_XORY_Y	;	check xory y-axis
 	
 INC_Y:
 	cmp dh, 24		; if y = 24
-	je CHK_X	;	New Round
+	je CHK_X	;		check x-axis
 					; else
 	inc dh			;	y++
-
-	cmp xory, 0
-	je XOR_X
-	jmp SET_POS		;	SET_POS
+	jmp CHK_XORY_X	;	check xory x-axis
 
 DEC_Y:
 	cmp dh, 0		; if y = 0
-	je CHK_X		;	New Round
+	je CHK_X		;	cehck x-axis
 					; else
 	dec dh			;	y--
+	jmp CHK_XORY_X	;	check xory x-axis
 
-	cmp xory, 0
-	je XOR_X
-	jmp SET_POS		;	SET_POS
+CHK_XORY_X:
+	cmp xory, 0		; if xory = 0 (top to down |  down to top)
+	je XOR_X		;	xor x, 1
+	jmp SET_POS
+
+CHK_XORY_Y:
+	cmp xory, 1		; if xory = 1 (left to right | right to top) 
+	je XOR_Y		;	xor y, 1
+	jmp SET_POS
 
 XOR_X:
-	xor cl, 1		; xdt
+	xor cl, 1		; invert xory
 	jmp SET_POS
 
 XOR_Y:
-	xor ch, 1
+	xor ch, 1		; invert xory
 	jmp SET_POS
 
 EXIT:
