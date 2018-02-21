@@ -1,5 +1,10 @@
 .model tiny
 
+REAL_X	equ		50h				; real x-axis
+REAL_Y	equ		20h				; real y-axis
+IMG_Y	equ		25h				; imaginary y-axis
+TIME	equ		01h				; time
+
 .data
 	head		db 80 dup (?)	; array x-axis keep head position random
 	char		db ?			; char random, seed random
@@ -8,7 +13,6 @@
 	org     0100h
 
 main:
-
 ;rand_seed
 	mov		ah,		00h			; Read System-Timer Time Counter
 	int		1ah					; System Timer and Clock Services
@@ -18,20 +22,19 @@ main:
  	mov		char,	dl
 
 	mov		si,		00h
-rand_head:						; while 80 time for random y-position head
-								; char = f(char) = (5*char + 7) % 37 (prime number)
+rand_head:						; char = f(char) = (5*char + 7) % 37 (prime number)
 	mov		al,		char
 	mov		dl,		05h			; dl = 5
 	mul		dl					; ax = al * dl
 	add		ax,		07h			; ax += 7
-	mov		dl,		25h			; dl = 37
+	mov		dl,		IMG_Y			; dl = 37
 	div		dl					; {da, ax} = ax % dl
 
 	mov		char, ah
 	mov		head[si], ah
 
 	inc		si
-	cmp		si,		50h
+	cmp		si,		REAL_X
 	jl		rand_head
 
 ;set_video
@@ -50,8 +53,7 @@ set_cursor:
 
 ;set_color
 	mov		bl,		head[si]
-	sub		bl,		dh			; bl = bl - dh
-								; head -= y-axis_rander
+	sub		bl,		dh			; bl = head[si] - y-axis_rander
 
 	cmp		bl,		00h			; position 0 form head
 	jc		color_white
@@ -108,38 +110,39 @@ rand_char:
 	int		10h					; Video and Screen Services
 
 ;chk_endline
-	cmp		dl,		50h      	; if x = 80
-	je		chk_endscreen      		; 	newline
+	cmp		dl,		REAL_X    	; if x = 80
+	je		chk_endscreen  		; 	newline
 	inc		dl					; inc x
 	inc		si					; inc si
 	jmp		set_cursor
 
 chk_endscreen:
-	cmp		dh,		18h       	; if y = 25
-	je		inc_head				; 	change head	
+	cmp		dh,		REAL_Y    	; if y = 25
+	je		delay				; 	change head	
 	mov		dl,		00h        	; x = 0
 	mov		si,		00h			; si = 0
 	inc		dh					; inc y
 	jmp		set_cursor
 
-inc_head:
-;delay
+delay:
 	mov		ah,		86h			; Wait
-	mov		cx,		01h			; Hight time	
+	mov		cx,		TIME		; Hight time	
 	mov		dx,		00h			; Low time
 	int		15h					; Cassette and Extended Services 
 
 	mov		si,		00h
-;inc_head
+inc_head:
 	inc		head[si]			; head[si]++
-	cmp		head[si],	25h		; if head[si] == 37
+	cmp		head[si],	IMG_Y	; if head[si] == 37
 	jne		inc_si
 	mov		head[si],	00h		;	head[si] = 0
 
 inc_si:
 	inc		si					; si++
-	cmp		si,		50h			; if si == 80
+	cmp		si,		REAL_X		; if si == 80
 	jne		inc_head
+	mov		dx,		00h
+	mov		si,		00h
 	jmp		set_cursor
 
 exit:
