@@ -1,7 +1,7 @@
 .model tiny
 
 .data
-	head		db 80 dup (?)	; array x-axis keep color random
+	head		db 80 dup (?)	; array x-axis keep head position random
 	char		db ?			; char random [33, 126]
 	seed		db ?			; byte random
 
@@ -61,21 +61,21 @@ set_color:
 	jz		color_white
 	jc		color_white
 
+	cmp		bl,		01h			; position 1-2 form head
+	jz		color_lgray
+	jc		color_lgray
+
 	cmp		bl,		02h			; position 1-2 form head
-	jz		color_lgreen
-	jc		color_lgreen
+	jz		color_gray
+	jc		color_gray
 
 	cmp     bl,     04h         ; position 3-4 form head
 	jz		color_green
 	jc		color_green
 
-	cmp     bl,     08h         ; position 5-8 form head
+	cmp     bl,     09h         ; position 5-8 form head
 	jz		color_lgreen
 	jc		color_lgreen
-
-	cmp     bl,     09h         ; position 9 form head
-	jz		color_gray
-	jc		color_gray
 
 	jmp		color_black			; (>9 || - } print fount color (black)ground
 
@@ -85,6 +85,10 @@ color_black:
 
 color_green:
 	mov		bl, 02h
+	jmp     print_char
+
+color_lgray:
+	mov		bl, 07h
 	jmp     print_char
 
 color_gray:
