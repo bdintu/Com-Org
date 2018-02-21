@@ -109,20 +109,20 @@ rand_char:
 
 ;chk_endline
 	cmp		dl,		50h      	; if x = 80
-	je		newline      		; 	newline
+	je		chk_endscreen      		; 	newline
 	inc		dl					; inc x
 	inc		si					; inc si
 	jmp		set_cursor
 
-newline:
+chk_endscreen:
 	cmp		dh,		18h       	; if y = 25
-	je		ch_head				; 	change head	
-	mov		dl,		00h        	; y = 0
+	je		inc_head				; 	change head	
+	mov		dl,		00h        	; x = 0
 	mov		si,		00h			; si = 0
 	inc		dh					; inc y
 	jmp		set_cursor
 
-ch_head:
+inc_head:
 ;delay
 	mov		ah,		86h			; Wait
 	mov		cx,		01h			; Hight time	
@@ -130,7 +130,7 @@ ch_head:
 	int		15h					; Cassette and Extended Services 
 
 	mov		si,		00h
-inc_head:
+;inc_head
 	inc		head[si]			; head[si]++
 	cmp		head[si],	25h		; if head[si] == 37
 	jne		inc_si
