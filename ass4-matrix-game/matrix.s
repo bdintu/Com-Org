@@ -1,21 +1,20 @@
-RAIN_SIZE	equ		0ah
-X_MAX		equ		25 + RAIN_SIZE
+RAIN_SIZE		equ		0ah
+X_MAX			equ		25 + RAIN_SIZE
+DEFAULT_RAIN	equ		-01h
 
 .model	tiny
 
 .data
-	head	db 80	dup(?)
+	head	db 80	dup(DEFAULT_RAIN)
 
 .code
 	org		0100h
 main:
-
-set_video:
+; set_video
 	mov		ah,		00h
 	mov		al,		03h
 	int		10h
-
-hid_cursor:
+; hid_cursor
 	mov		ch,		32
 	mov		ah,		01h
 	int 	10h
@@ -25,30 +24,42 @@ init:
 	mov		es,		ax
 
 ;	call	rand				; ret si
-	mov		si,			01h
-	cmp		head[si],	0
+	mov		si,			10h
+	cmp		head[si],	DEFAULT_RAIN
 	jne		rander_init
-	mov		head[si],	01h
+	mov		head[si],	00h
+
+while1:
+
+;getch:
+;	mov		ah,		01h
+;	int		09h
+;	cmp		al,		00h
+;	jne		exit_half
 	
-rander_init:
-	mov		si,		01h
-rander_body:
-	cmp		head[si],	00h
-	je		rander_inc
+	rander_init:
+		mov		si,		01h
+	rander_test:
+		cmp		si,		80
+		je		while1
+	rander_body:
+		cmp		head[si],	DEFAULT_RAIN
+		je		rander_inc
 
-	mov		ah,		'J'
-	mov		al,		02h
-	call	print
-;	call	set_color
-	call	delay
-	inc		head[si]
+		mov		ah,		'J'
+		call	print_rain
+		call	delay
+		inc		head[si]
+	
+		cmp		head[si],	20
+		jne		rander_inc
+		mov		head[si],	DEFAULT_RAIN
 
-rander_inc:
-	inc		si
-	cmp		si,		80
-	jne		rander_body
+	rander_inc:
+		inc		si
+		jmp		rander_test
 
-	jmp exit
+jmp		while1
 
 ;rand:
 ;	ret
@@ -69,10 +80,57 @@ print:
 	rep		stosw
 	ret
 
-;set_color:
-;	mov		dl,		head[si]
-;	sub		bl,		
-;	ret
+exit_half:
+	jmp		exit
+
+print_rain:
+					
+	mov		al, 0fh				; white
+	call	print
+	dec		head[si]
+
+	mov		al, 07h				; lgray
+	call	print
+	dec		head[si]
+
+	mov		al, 07h				; lgray
+	call	print
+	dec		head[si]
+
+	mov		al, 02h				; green
+	call	print
+	dec		head[si]
+
+	mov		al, 02h				; green
+	call	print
+	dec		head[si]
+
+	mov		al, 02h				; green
+	call	print
+	dec		head[si]
+
+	mov		al, 0ah				; lgreen
+	call	print
+	dec		head[si]
+
+	mov		al, 0ah				; lgreen
+	call	print
+	dec		head[si]
+		
+	mov		al, 0ah				; lgreen
+	call	print
+	dec		head[si]
+
+	mov		al, 0ah				; lgreen
+	call	print
+	dec		head[si]
+
+	mov		ah,	' '				; space
+	mov		al, 00h				; black
+	call	print
+	add		head[si],		10
+
+	ret
 
 delay:
 	mov		cx,		65535
