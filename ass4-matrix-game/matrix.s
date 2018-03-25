@@ -1,3 +1,6 @@
+RAIN_SIZE	equ		0ah
+X_MAX		equ		25 + RAIN_SIZE
+
 .model	tiny
 
 .data
@@ -10,29 +13,45 @@ main:
 set_video:
 	mov		ah,		00h
 	mov		al,		03h
-	int		010h
+	int		10h
+
+hid_cursor:
+	mov		ch,		32
+	mov		ah,		01h
+	int 	10h
 
 init:
 	mov		ax,		0b800h
 	mov		es,		ax
 
+;	call	rand				; ret si
 	mov		si,			01h
-	mov		head[si],	00h
-
-	mov		cx,		25
-rander:
-	push	cx
+	cmp		head[si],	0
+	jne		rander_init
+	mov		head[si],	01h
+	
+rander_init:
+	mov		si,		01h
+rander_body:
+	cmp		head[si],	00h
+	je		rander_inc
 
 	mov		ah,		'J'
 	mov		al,		02h
 	call	print
+;	call	set_color
 	call	delay
 	inc		head[si]
 
-	pop		cx
-	loop	rander
+rander_inc:
+	inc		si
+	cmp		si,		80
+	jne		rander_body
 
 	jmp exit
+
+;rand:
+;	ret
 
 print:
 	push	ax
@@ -50,10 +69,10 @@ print:
 	rep		stosw
 	ret
 
-set_color:
-	mov		dl,		head[si]
-	sub		bl,		
-	ret
+;set_color:
+;	mov		dl,		head[si]
+;	sub		bl,		
+;	ret
 
 delay:
 	mov		cx,		65535
