@@ -5,7 +5,33 @@ DEFAULT_RAIN	equ		-01h
 .model	tiny
 
 .data
-	head	db 80	dup(DEFAULT_RAIN)
+	head	db	80	dup(DEFAULT_RAIN)
+	life	db	'9', 00h
+	
+	titleMsg db '//============================================================================\\'
+		   db '||                                                                            ||'
+		   db '||                                                                            ||'
+		   db '||                                                                            ||'
+		   db '||                     ___ _ __   __ _  ___ ___                               ||'
+		   db '||                    / __| ''_ \ / _` |/ __/ _ \                              ||'
+		   db '||                    \__ \ |_) | (_| | (_|  __/                              ||'
+		   db '||                    |___/ .__/ \__,_|\___\___|                              ||'
+		   db '||                        |_|         _                                       ||'
+		   db '||                                   (_) __ _ _ __ ___                        ||'
+		   db '||                                   | |/ _` | ''_ ` _ \                       ||'
+		   db '||                                   | | (_| | | | | | |                      ||'
+		   db '||                                  _/ |\__,_|_| |_| |_|                      ||'
+		   db '||                                 |__/                                       ||'
+		   db '||                                                                            ||'
+		   db '||                       EASY    -- UNLIMITED BULLETS                         ||'
+		   db '||                       NORMAL  -- STARTS WITH 20 BULLETS                    ||'
+		   db '||                       VETERAN -- 5 BULLETS TO YOU, CAN YOU SURVIVE?        ||'
+		   db '||                       EXIT                                                 ||'
+		   db '||                                                                            ||'
+		   db '||                                                                            ||'
+		   db '||                                                                            ||'
+		   db '||                                                                            ||'
+		   db '\\============================================================================//$'
 
 .code
 	org		0100h
@@ -29,6 +55,10 @@ init:
 	jne		rander_init
 	mov		head[si],	00h
 
+show:
+	mov		ax,		word ptr	life
+	call	print
+
 while1:
 
 ;getch:
@@ -46,7 +76,7 @@ while1:
 		cmp		head[si],	DEFAULT_RAIN
 		je		rander_inc
 
-		mov		ah,		'J'
+		mov		al,		'J'
 		call	print_rain
 		call	delay
 		inc		head[si]
@@ -65,70 +95,75 @@ jmp		while1
 ;	ret
 
 print:
+	push	dx
 	push	ax
-	mov		ax,		80				; 2*(80*head[si] + si) -1
-	mov		dl,		head[si]
-	mul		dl
-	add		ax,		si
-	mov		dx,		2
-	mul		dx
-	sub		ax,		1
+	mov		ax,		80				; 2*(80*head[si] + si)
+	mov		cl,		dh
+	mul		cl
+	
+	xor		cx,		cx
+	mov		cl,		dl
+	add		ax,		cx
+	mov		cx,		2
+	mul		cx
 	mov		di,		ax
 
 	pop		ax
 	mov		cx,		1
 	rep		stosw
+	pop		dx
 	ret
 
 exit_half:
 	jmp		exit
 
 print_rain:
-					
-	mov		al, 0fh				; white
-	call	print
-	dec		head[si]
+	mov		dx,		si
+	mov		dh,		head[si]
 
-	mov		al, 07h				; lgray
+	mov		ah, 0fh				; white
 	call	print
-	dec		head[si]
 
-	mov		al, 07h				; lgray
+	dec		dh
+	mov		ah, 07h				; lgray
 	call	print
-	dec		head[si]
 
-	mov		al, 02h				; green
+	dec		dh
+	mov		ah, 07h				; lgray
 	call	print
-	dec		head[si]
 
-	mov		al, 02h				; green
+	dec		dh
+	mov		ah, 02h				; green
 	call	print
-	dec		head[si]
 
-	mov		al, 02h				; green
+	dec		dh
+	mov		ah, 02h				; green
 	call	print
-	dec		head[si]
 
-	mov		al, 0ah				; lgreen
+	dec		dh
+	mov		ah, 02h				; green
 	call	print
-	dec		head[si]
 
-	mov		al, 0ah				; lgreen
+	dec		dh
+	mov		ah, 0ah				; lgreen
 	call	print
-	dec		head[si]
-		
-	mov		al, 0ah				; lgreen
-	call	print
-	dec		head[si]
 
-	mov		al, 0ah				; lgreen
+	dec		dh
+	mov		ah, 0ah				; lgreen
 	call	print
-	dec		head[si]
 
-	mov		ah,	' '				; space
-	mov		al, 00h				; black
+	dec		dh
+	mov		ah, 0ah				; lgreen
 	call	print
-	add		head[si],		10
+
+	dec		dh
+	mov		ah, 0ah				; lgreen
+	call	print
+
+	dec		dh
+	mov		ah, 00h				; black
+	mov		al,	' '
+	call	print
 
 	ret
 
