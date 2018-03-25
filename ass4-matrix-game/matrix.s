@@ -7,32 +7,59 @@ DEFAULT_RAIN	equ		-01h
 .data
 	seed	dw	?
 	head	db	80	dup(DEFAULT_RAIN)
-	life	db	'9', 00h
+	life	db	'9', 0fh
+
+	alpha	db	'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 	
-	titleMsg db '//============================================================================\\'
-		   db '||                                                                            ||'
-		   db '||                                                                            ||'
-		   db '||                                                                            ||'
-		   db '||                     ___ _ __   __ _  ___ ___                               ||'
-		   db '||                    / __| ''_ \ / _` |/ __/ _ \                              ||'
-		   db '||                    \__ \ |_) | (_| | (_|  __/                              ||'
-		   db '||                    |___/ .__/ \__,_|\___\___|                              ||'
-		   db '||                        |_|         _                                       ||'
-		   db '||                                   (_) __ _ _ __ ___                        ||'
-		   db '||                                   | |/ _` | ''_ ` _ \                       ||'
-		   db '||                                   | | (_| | | | | | |                      ||'
-		   db '||                                  _/ |\__,_|_| |_| |_|                      ||'
-		   db '||                                 |__/                                       ||'
-		   db '||                                                                            ||'
-		   db '||                       EASY    -- UNLIMITED BULLETS                         ||'
-		   db '||                       NORMAL  -- STARTS WITH 20 BULLETS                    ||'
-		   db '||                       VETERAN -- 5 BULLETS TO YOU, CAN YOU SURVIVE?        ||'
-		   db '||                       EXIT                                                 ||'
-		   db '||                                                                            ||'
-		   db '||                                                                            ||'
-		   db '||                                                                            ||'
-		   db '||                                                                            ||'
-		   db '\\============================================================================//$'
+	titleS	db '//============================================================================\\'
+			db '||                                                                            ||'
+			db '||                                                                            ||'
+			db '||                                                                            ||'
+			db '||                     ___ _ __   __ _  ___ ___                               ||'
+			db '||                    / __| ''_ \ / _` |/ __/ _ \                             ||'
+			db '||                    \__ \ |_) | (_| | (_|  __/                              ||'
+			db '||                    |___/ .__/ \__,_|\___\___|                              ||'
+			db '||                        |_|         _                                       ||'
+			db '||                                   (_) __ _ _ __ ___                        ||'
+			db '||                                   | |/ _` | ''_ ` _ \                      ||'
+			db '||                                   | | (_| | | | | | |                      ||'
+			db '||                                  _/ |\__,_|_| |_| |_|                      ||'
+			db '||                                 |__/                                       ||'
+			db '||                                                                            ||'
+			db '||                       EASY    -- UNLIMITED BULLETS                         ||'
+			db '||                       NORMAL  -- STARTS WITH 20 BULLETS                    ||'
+			db '||                       VETERAN -- 5 BULLETS TO YOU, CAN YOU SURVIVE?        ||'
+			db '||                       EXIT                                                 ||'
+			db '||                                                                            ||'
+			db '||                                                                            ||'
+			db '||                                                                            ||'
+			db '||                                                                            ||'
+			db '\\============================================================================//$'
+		   
+	over	db '//============================================================================\\'
+			db '||                                                                            ||'
+			db '||                                                                            ||'
+			db '||                                                                            ||'
+			db '||                      ____                                                  ||'
+			db '||                     / ___| __ _ _ __ ___   ___                             ||'
+			db '||                    | |  _ / _` | ''_ ` _ \ / _ \                           ||'
+			db '||                    | |_| | (_| | | | | | |  __/                            ||'
+			db '||                     \____|\__,_|_| |_| |_|\___|                            ||'
+			db '||                                    ___                                     ||'
+			db '||                                   / _ \__   _____ _ __                     ||'
+			db '||                                  | | | \ \ / / _ \ ''__|                   ||'
+			db '||                                  | |_| |\ V /  __/ |                       ||'
+			db '||                                   \___/  \_/ \___|_|                       ||'
+			db '||                                                                            ||'
+			db '||                                                                            ||'
+			db '||                            Your score:                                     ||'
+			db '||                                                                            ||'
+			db '||                                                                            ||'
+			db '||                    Press Enter to go back to main menu                     ||'
+			db '||                                                                            ||'
+			db '||                                                                            ||'
+			db '||                                                                            ||'
+			db '\\============================================================================//$'
 
 .code
 	org		0100h
@@ -45,30 +72,27 @@ main:
 	mov		ch,		32
 	mov		ah,		01h
 	int 	10h
+	
+; print_title
+
 
 init:
 	mov		ax,		0b800h
 	mov		es,		ax
 
-
-show:
-	mov		ax,		word ptr	life
-	call	print
-
 while1:
 
-;getch:
-;	mov		ah,		01h
-;	int		09h
-;	cmp		al,		00h
-;	jne		exit_half
+;getch
+	mov		ah,		01h
+	int		16h
+	cmp		al,		1Bh
+	je		exit_half
 
-	call	rand						; ret seed
+	call	rand_rainpos					; ret seed
 	mov		si,			seed
 	cmp		head[si],	DEFAULT_RAIN
 	jne		rander_init
 	mov		head[si],	00h
-
 	
 	rander_init:
 		mov		si,		01h
@@ -81,6 +105,7 @@ while1:
 
 		mov		al,		'J'
 		call	print_rain
+		call	print_life
 
 		inc		head[si]
 	
@@ -96,16 +121,19 @@ while1:
 
 jmp		while1
 
-rand:
+rand_rainpos:
 	mov		ax,		7
 	mov		dx,		seed
 	mul		dx
 	xor		dx,		dx
-	mov		cx,		79
+	mov		cx,		71
 	div		cx
-	add		dl,		1
+	add		dl,		4
 	mov		seed,	dx
 	ret
+
+rand_ch:
+	mov		ax,		7
 
 print:
 	push	dx
@@ -129,6 +157,12 @@ print:
 
 exit_half:
 	jmp		exit
+
+print_life:
+	mov		ax,		word ptr life
+	mov		dh,		0
+	mov		dl,		75
+	call	print
 
 print_rain:
 	mov		dx,		si
