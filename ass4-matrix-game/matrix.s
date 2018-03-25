@@ -5,6 +5,7 @@ DEFAULT_RAIN	equ		-01h
 .model	tiny
 
 .data
+	seed	dw	?
 	head	db	80	dup(DEFAULT_RAIN)
 	life	db	'9', 00h
 	
@@ -49,11 +50,6 @@ init:
 	mov		ax,		0b800h
 	mov		es,		ax
 
-;	call	rand				; ret si
-	mov		si,			10h
-	cmp		head[si],	DEFAULT_RAIN
-	jne		rander_init
-	mov		head[si],	00h
 
 show:
 	mov		ax,		word ptr	life
@@ -66,6 +62,13 @@ while1:
 ;	int		09h
 ;	cmp		al,		00h
 ;	jne		exit_half
+
+	call	rand						; ret seed
+	mov		si,			seed
+	cmp		head[si],	DEFAULT_RAIN
+	jne		rander_init
+	mov		head[si],	00h
+
 	
 	rander_init:
 		mov		si,		01h
@@ -78,21 +81,31 @@ while1:
 
 		mov		al,		'J'
 		call	print_rain
-		call	delay
+
 		inc		head[si]
 	
-		cmp		head[si],	20
+		cmp		head[si],	X_MAX
 		jne		rander_inc
 		mov		head[si],	DEFAULT_RAIN
 
+		call	delay
 	rander_inc:
 		inc		si
 		jmp		rander_test
 
+
 jmp		while1
 
-;rand:
-;	ret
+rand:
+	mov		ax,		7
+	mov		dx,		seed
+	mul		dx
+	xor		dx,		dx
+	mov		cx,		79
+	div		cx
+	add		dl,		1
+	mov		seed,	dx
+	ret
 
 print:
 	push	dx
