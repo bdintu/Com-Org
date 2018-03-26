@@ -9,8 +9,8 @@ LIFE_POS		equ		2*(1*80 + 9)
 	seed	dw	?
 	life	db	'9', 0fh
 
-	head	db	10	dup(DEFAULT_RAIN)
-	rain_pos	db	14, 20, 26, 32, 38, 44, 50, 56, 62, 68
+	rain_y	db	10	dup(DEFAULT_RAIN)
+	rain_x	db	14, 20, 26, 32, 38, 44, 50, 56, 62, 68
 
 	alpha	db	'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 ;	pos		db '01234567890123456789012345678901234567890123456789012345678901234567890123456789'
@@ -119,9 +119,9 @@ while1:
 
 	call	rand_rainpos					; ret seed
 	mov		si,			seed
-	cmp		head[si],	DEFAULT_RAIN
+	cmp		rain_y[si],	DEFAULT_RAIN
 	jne		rander_init
-	mov		head[si],	DEFAULT_RAIN + 1
+	mov		rain_y[si],	DEFAULT_RAIN + 1
 	
 	rander_init:
 		mov		si,		00h
@@ -129,33 +129,34 @@ while1:
 		cmp		si,		0ah
 		je		while1
 	rander_body:
-		cmp		head[si],	DEFAULT_RAIN
+		cmp		rain_y[si],	DEFAULT_RAIN
 		je		rander_inc
 
 		call	rand_ch						; ret al
 		call	print_rain
 		call	print_life
 
-		inc		head[si]
+		inc		rain_y[si]
 	
-		cmp		head[si],	X_MAX
+		cmp		rain_y[si],	X_MAX
 		jne		rander_inc
-		mov		head[si],	DEFAULT_RAIN
+		mov		rain_y[si],	DEFAULT_RAIN
 
 		call	delay
 	rander_inc:
 		inc		si
 		jmp		rander_test
 
-
 jmp		while1
 
 exit_half:
 	jmp		exit
+	ret
 	
 set_videoram:
 	mov		ax,		0b800h
 	mov		es,		ax
+	ret
 
 hide_cursor:
 	mov		ch,		32
@@ -195,6 +196,7 @@ clrscr:
 	mov		cx,		80*25
 	mov		dx,		0
 	call	print_di
+	ret
 
 getch:
 	mov		ah,		01h
@@ -228,8 +230,8 @@ print_life:
 	ret
 
 print_rain:
-	mov		dl,		rain_pos[si]
-	mov		dh,		head[si]
+	mov		dl,		rain_x[si]
+	mov		dh,		rain_y[si]
 
 	mov		ah, 0fh				; white
 	call	print
