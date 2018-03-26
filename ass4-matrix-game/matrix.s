@@ -10,18 +10,45 @@ DEFAULT_RAIN	equ		-01h
 	life	db	'9', 0fh
 
 	alpha	db	'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+	rain_pos	db	14, 20, 26, 32, 38, 44, 50, 56, 62, 68
+	
+	pos		db '01234567890123456789012345678901234567890123456789012345678901234567890123456789'
+	gameS	db '//============================================================================\\'
+			db '|| life: 9 |  a  |  b  |  c  |  d  |  e  |  f  |  g  |  h  |  i  |  j  |      ||'
+			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '||    Balm |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '||   Game  |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '|| 0759    |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '|| 0744    |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '||         |#####|#####|#####|#####|#####|#####|#####|#####|#####|#####|      ||'
+			db '||         |  Q  |  W  |  E  |  R  |  T  |  Y  |  U  |  I  |  O  |  P  |      ||'
+			db '\\============================================================================//$'
 	
 	titleS	db '//============================================================================\\'
 			db '||                                                                            ||'
 			db '||                                                                            ||'
 			db '||                                                                            ||'
 			db '||                     ___ _ __   __ _  ___ ___                               ||'
-			db '||                    / __| ''_ \ / _` |/ __/ _ \                             ||'
+			db '||                    / __| ''_ \ / _` |/ __/ _ \                              ||'
 			db '||                    \__ \ |_) | (_| | (_|  __/                              ||'
 			db '||                    |___/ .__/ \__,_|\___\___|                              ||'
 			db '||                        |_|         _                                       ||'
 			db '||                                   (_) __ _ _ __ ___                        ||'
-			db '||                                   | |/ _` | ''_ ` _ \                      ||'
+			db '||                                   | |/ _` | ''_ ` _ \                       ||'
 			db '||                                   | | (_| | | | | | |                      ||'
 			db '||                                  _/ |\__,_|_| |_| |_|                      ||'
 			db '||                                 |__/                                       ||'
@@ -36,18 +63,18 @@ DEFAULT_RAIN	equ		-01h
 			db '||                                                                            ||'
 			db '\\============================================================================//$'
 		   
-	over	db '//============================================================================\\'
+	overS	db '//============================================================================\\'
 			db '||                                                                            ||'
 			db '||                                                                            ||'
 			db '||                                                                            ||'
 			db '||                      ____                                                  ||'
 			db '||                     / ___| __ _ _ __ ___   ___                             ||'
-			db '||                    | |  _ / _` | ''_ ` _ \ / _ \                           ||'
+			db '||                    | |  _ / _` | ''_ ` _ \ / _ \                            ||'
 			db '||                    | |_| | (_| | | | | | |  __/                            ||'
 			db '||                     \____|\__,_|_| |_| |_|\___|                            ||'
 			db '||                                    ___                                     ||'
 			db '||                                   / _ \__   _____ _ __                     ||'
-			db '||                                  | | | \ \ / / _ \ ''__|                   ||'
+			db '||                                  | | | \ \ / / _ \ ''__|                    ||'
 			db '||                                  | |_| |\ V /  __/ |                       ||'
 			db '||                                   \___/  \_/ \___|_|                       ||'
 			db '||                                                                            ||'
@@ -64,27 +91,28 @@ DEFAULT_RAIN	equ		-01h
 .code
 	org		0100h
 main:
-; set_video
-	mov		ah,		00h
-	mov		al,		03h
-	int		10h
-; hid_cursor
-	mov		ch,		32
-	mov		ah,		01h
-	int 	10h
+	call	set_video
+	call	hide_cursor
+	call	set_videoram
+
+; print_title        
+	mov		si,		00h
+	mov		dx,		00h
+	pritil:
+		mov     di,		dx
+		mov     cx,		1
+ 		mov     ah,		0fh
+		mov		al,		gameS[si]
+		rep     stosw
+		inc		si
+		add		dx,		2
 	
-; print_title
-
-
-init:
-	mov		ax,		0b800h
-	mov		es,		ax
+		cmp		si,		80*24
+		jne		pritil
 
 while1:
 
-;getch
-	mov		ah,		01h
-	int		16h
+	call	getch
 	cmp		al,		1Bh
 	je		exit_half
 
@@ -104,8 +132,8 @@ while1:
 		je		rander_inc
 
 		mov		al,		'J'
-		call	print_rain
-		call	print_life
+		;call	print_rain
+		;call	print_life
 
 		inc		head[si]
 	
@@ -120,6 +148,30 @@ while1:
 
 
 jmp		while1
+
+exit_half:
+	jmp		exit
+
+set_video:
+	mov		ah,		00h
+	mov		al,		03h
+	int		10h
+	ret
+
+hide_cursor:
+	mov		ch,		32
+	mov		ah,		01h
+	int 	10h
+	ret
+
+set_videoram:
+	mov		ax,		0b800h
+	mov		es,		ax
+
+getch:
+	mov		ah,		01h
+	int		16h
+	ret
 
 rand_rainpos:
 	mov		ax,		7
@@ -155,8 +207,6 @@ print:
 	pop		dx
 	ret
 
-exit_half:
-	jmp		exit
 
 print_life:
 	mov		ax,		word ptr life
