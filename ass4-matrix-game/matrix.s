@@ -1,21 +1,22 @@
 RAIN_SIZE		equ		0ah
 X_MAX			equ		25 + RAIN_SIZE
-DEFAULT_RAIN	equ		-01h
+DEFAULT_RAIN	equ		03h
+LIFE_POS		equ		2*(1*80 + 9)
 
 .model	tiny
 
 .data
 	seed	dw	?
-	head	db	80	dup(DEFAULT_RAIN)
 	life	db	'9', 0fh
 
-	alpha	db	'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+	head	db	10	dup(DEFAULT_RAIN)
 	rain_pos	db	14, 20, 26, 32, 38, 44, 50, 56, 62, 68
-	
-	pos		db '01234567890123456789012345678901234567890123456789012345678901234567890123456789'
+
+	alpha	db	'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+;	pos		db '01234567890123456789012345678901234567890123456789012345678901234567890123456789'
 	gameS	db '//============================================================================\\'
-			db '|| life: 9 |  a  |  b  |  c  |  d  |  e  |  f  |  g  |  h  |  i  |  j  |      ||'
-			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '|| life: _ |  Q  |  W  |  E  |  R  |  T  |  Y  |  U  |  I  |  O  |  P  |      ||'
+			db '||         |-----|-----|-----|-----|-----|-----|-----|-----|-----|-----|      ||'
 			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
 			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
 			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
@@ -34,9 +35,9 @@ DEFAULT_RAIN	equ		-01h
 			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
 			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
 			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
-			db '||         |#####|#####|#####|#####|#####|#####|#####|#####|#####|#####|      ||'
-			db '||         |  Q  |  W  |  E  |  R  |  T  |  Y  |  U  |  I  |  O  |  P  |      ||'
-			db '\\============================================================================//$'
+			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '\\=========|     |     |     |     |     |     |     |     |     |     |======//$'
 	
 	titleS	db '//============================================================================\\'
 			db '||                                                                            ||'
@@ -91,19 +92,19 @@ DEFAULT_RAIN	equ		-01h
 .code
 	org		0100h
 main:
-	call	set_video
-	call	hide_cursor
 	call	set_videoram
+	call	clrscr
+	call	hide_cursor
 
 ; print_title        
 	mov		si,		00h
 	mov		dx,		00h
+	mov     ah,		0fh
+	mov     cx,		1
 	pritil:
 		mov     di,		dx
-		mov     cx,		1
- 		mov     ah,		0fh
 		mov		al,		gameS[si]
-		rep     stosw
+		call	print_di
 		inc		si
 		add		dx,		2
 	
@@ -120,20 +121,20 @@ while1:
 	mov		si,			seed
 	cmp		head[si],	DEFAULT_RAIN
 	jne		rander_init
-	mov		head[si],	00h
+	mov		head[si],	DEFAULT_RAIN + 1
 	
 	rander_init:
-		mov		si,		01h
+		mov		si,		00h
 	rander_test:
-		cmp		si,		80
+		cmp		si,		0ah
 		je		while1
 	rander_body:
 		cmp		head[si],	DEFAULT_RAIN
 		je		rander_inc
 
-		mov		al,		'J'
-		;call	print_rain
-		;call	print_life
+		call	rand_ch						; ret al
+		call	print_rain
+		call	print_life
 
 		inc		head[si]
 	
@@ -151,12 +152,10 @@ jmp		while1
 
 exit_half:
 	jmp		exit
-
-set_video:
-	mov		ah,		00h
-	mov		al,		03h
-	int		10h
-	ret
+	
+set_videoram:
+	mov		ax,		0b800h
+	mov		es,		ax
 
 hide_cursor:
 	mov		ch,		32
@@ -164,34 +163,17 @@ hide_cursor:
 	int 	10h
 	ret
 
-set_videoram:
-	mov		ax,		0b800h
-	mov		es,		ax
-
-getch:
-	mov		ah,		01h
-	int		16h
+print_di:							; get ax, dx
+	mov     di,		dx
+	mov     cx,		1
+	rep     stosw
 	ret
 
-rand_rainpos:
-	mov		ax,		7
-	mov		dx,		seed
-	mul		dx
-	xor		dx,		dx
-	mov		cx,		71
-	div		cx
-	add		dl,		4
-	mov		seed,	dx
-	ret
-
-rand_ch:
-	mov		ax,		7
-
-print:
+print:								; get ax, dx
 	push	dx
 	push	ax
 	mov		ax,		80				; 2*(80*head[si] + si)
-	mov		cl,		dh
+	mov		cl,		dh				; 2*(80*dh + dl)
 	mul		cl
 	
 	xor		cx,		cx
@@ -207,15 +189,46 @@ print:
 	pop		dx
 	ret
 
+clrscr:
+	mov		ah,		0
+	mov		al,		' '
+	mov		cx,		80*25
+	mov		dx,		0
+	call	print_di
+
+getch:
+	mov		ah,		01h
+	int		16h
+	ret
+
+rand_rainpos:
+	mov		ax,		7
+	mov		dx,		seed
+	mul		dx
+	xor		dx,		dx
+	mov		cx,		10
+	div		cx
+	mov		seed,	dx			; ret seed
+	ret
+
+rand_ch:
+	mov		ax,		7
+	mov		dx,		seed
+	mul		dx
+	xor		dx,		dx
+	mov		cx,		62
+	div		cx
+	mov		al,		dl			; ret al
+	ret
 
 print_life:
 	mov		ax,		word ptr life
-	mov		dh,		0
-	mov		dl,		75
-	call	print
+	mov		dx,		LIFE_POS
+	call	print_di
+	ret
 
 print_rain:
-	mov		dx,		si
+	mov		dl,		rain_pos[si]
 	mov		dh,		head[si]
 
 	mov		ah, 0fh				; white
@@ -265,10 +278,17 @@ print_rain:
 	ret
 
 delay:
-	mov		cx,		65535
-	abc:
-		nop
-		loop	abc
+	mov		cx,		10
+	delay_outter:
+		push	cx
+
+		mov		cx,		0ffffh
+		delay_innter:
+			nop
+			loop	delay_innter
+
+		pop		cx
+		loop	delay_outter
 	ret
 
 exit:
