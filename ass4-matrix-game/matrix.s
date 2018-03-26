@@ -1,6 +1,6 @@
 RAIN_SIZE		equ		0ah
 X_MAX			equ		25 + RAIN_SIZE
-DEFAULT_RAIN	equ		03h
+DEFAULT_RAIN	equ		-01h
 LIFE_POS		equ		2*(1*80 + 9)
 
 .model	tiny
@@ -12,11 +12,12 @@ LIFE_POS		equ		2*(1*80 + 9)
 	rain_y	db	10	dup(DEFAULT_RAIN)
 	rain_x	db	14, 20, 26, 32, 38, 44, 50, 56, 62, 68
 
-	alpha	db	'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
-;	pos		db '01234567890123456789012345678901234567890123456789012345678901234567890123456789'
-	gameS	db '//============================================================================\\'
-			db '|| life: _ |  Q  |  W  |  E  |  R  |  T  |  Y  |  U  |  I  |  O  |  P  |      ||'
-			db '||         |-----|-----|-----|-----|-----|-----|-----|-----|-----|-----|      ||'
+	; ''.join([chr(i) for i in range(33, 127)])
+	alpha	db	'!#$%&\()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{|}'	; 90
+
+	gameS	db '//=========|                                                           |======\\'
+			db '|| life: 9 |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
 			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
 			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
 			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
@@ -35,10 +36,10 @@ LIFE_POS		equ		2*(1*80 + 9)
 			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
 			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
 			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
-			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
-			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
-			db '\\=========|     |     |     |     |     |     |     |     |     |     |======//$'
-	
+			db '||         |#####|#####|#####|#####|#####|#####|#####|#####|#####|#####|      ||'
+			db '||         |  Q  |  W  |  E  |  R  |  T  |  Y  |  U  |  I  |  O  |  P  |      ||'
+			db '\\============================================================================//$'
+;	pos		db '01234567890123456789012345678901234567890123456789012345678901234567890123456789'	
 	titleS	db '//============================================================================\\'
 			db '||                                                                            ||'
 			db '||                                                                            ||'
@@ -96,7 +97,7 @@ main:
 	call	clrscr
 	call	hide_cursor
 
-; print_title        
+; printxy_title        
 	mov		si,		00h
 	mov		dx,		00h
 	mov     ah,		0fh
@@ -104,17 +105,18 @@ main:
 	pritil:
 		mov     di,		dx
 		mov		al,		gameS[si]
-		call	print_di
+		call	print
 		inc		si
 		add		dx,		2
 	
 		cmp		si,		80*24
 		jne		pritil
 
-while1:
+while1:	
+	call	delay
 
 	call	getch
-	cmp		al,		1Bh
+	cmp		al,		1Bh						; isEsc
 	je		exit_half
 
 	call	rand_rainpos					; ret seed
@@ -132,9 +134,9 @@ while1:
 		cmp		rain_y[si],	DEFAULT_RAIN
 		je		rander_inc
 
-		call	rand_ch						; ret al
+		mov		al,		'J'
 		call	print_rain
-		call	print_life
+		call	print_life		
 
 		inc		rain_y[si]
 	
@@ -142,21 +144,13 @@ while1:
 		jne		rander_inc
 		mov		rain_y[si],	DEFAULT_RAIN
 
-		call	delay
 	rander_inc:
 		inc		si
 		jmp		rander_test
-
-jmp		while1
+	ret
 
 exit_half:
 	jmp		exit
-	ret
-	
-set_videoram:
-	mov		ax,		0b800h
-	mov		es,		ax
-	ret
 
 hide_cursor:
 	mov		ch,		32
@@ -164,30 +158,14 @@ hide_cursor:
 	int 	10h
 	ret
 
-print_di:							; get ax, dx
+set_videoram:
+	mov		ax,		0b800h
+	mov		es,		ax
+	
+print:							; get ax, dx
 	mov     di,		dx
 	mov     cx,		1
 	rep     stosw
-	ret
-
-print:								; get ax, dx
-	push	dx
-	push	ax
-	mov		ax,		80				; 2*(80*head[si] + si)
-	mov		cl,		dh				; 2*(80*dh + dl)
-	mul		cl
-	
-	xor		cx,		cx
-	mov		cl,		dl
-	add		ax,		cx
-	mov		cx,		2
-	mul		cx
-	mov		di,		ax
-
-	pop		ax
-	mov		cx,		1
-	rep		stosw
-	pop		dx
 	ret
 
 clrscr:
@@ -195,8 +173,7 @@ clrscr:
 	mov		al,		' '
 	mov		cx,		80*25
 	mov		dx,		0
-	call	print_di
-	ret
+	call	print
 
 getch:
 	mov		ah,		01h
@@ -208,89 +185,92 @@ rand_rainpos:
 	mov		dx,		seed
 	mul		dx
 	xor		dx,		dx
-	mov		cx,		10
+	mov		cx,		90
 	div		cx
-	mov		seed,	dx			; ret seed
+	add		dx,		1
+	mov		seed,	dx
 	ret
 
-rand_ch:
-	mov		ax,		7
-	mov		dx,		seed
-	mul		dx
-	xor		dx,		dx
-	mov		cx,		62
-	div		cx
-	mov		al,		dl			; ret al
+printxy:								; get ax, dx
+	push	dx
+	push	ax
+	mov		ax,		80				; 2*(80*head[si] + si)
+	mov		cl,		dh				; 2*(80*dh + dl)
+	mul		cl
+	
+	xor		cx,		cx
+	mov		cl,		dl
+	add		ax,		cx
+	mov		cx,		2
+	mul		cx
+
+	mov		dx,		ax
+	pop		ax
+	call	print
+	pop		dx
 	ret
 
 print_life:
 	mov		ax,		word ptr life
 	mov		dx,		LIFE_POS
-	call	print_di
+	call	print
 	ret
 
 print_rain:
 	mov		dl,		rain_x[si]
 	mov		dh,		rain_y[si]
 
-	mov		ah, 0fh				; white
-	call	print
+	mov		ah, 	0fh				; white
+	call	printxy
 
 	dec		dh
-	mov		ah, 07h				; lgray
-	call	print
+	mov		ah, 	07h				; lgray
+	call	printxy
 
 	dec		dh
-	mov		ah, 07h				; lgray
-	call	print
+	mov		ah, 	07h				; lgray
+	call	printxy
 
 	dec		dh
-	mov		ah, 02h				; green
-	call	print
+	mov		ah, 	02h				; green
+	call	printxy
 
 	dec		dh
-	mov		ah, 02h				; green
-	call	print
+	mov		ah, 	02h				; green
+	call	printxy
 
 	dec		dh
-	mov		ah, 02h				; green
-	call	print
+	mov		ah, 	02h				; green
+	call	printxy
 
 	dec		dh
-	mov		ah, 0ah				; lgreen
-	call	print
+	mov		ah, 	0ah				; lgreen
+	call	printxy
 
 	dec		dh
-	mov		ah, 0ah				; lgreen
-	call	print
+	mov		ah, 	0ah				; lgreen
+	call	printxy
 
 	dec		dh
-	mov		ah, 0ah				; lgreen
-	call	print
+	mov		ah, 	0ah				; lgreen
+	call	printxy
 
 	dec		dh
-	mov		ah, 0ah				; lgreen
-	call	print
+	mov		ah, 	0ah				; lgreen
+	call	printxy
 
 	dec		dh
-	mov		ah, 00h				; black
+	mov		ah, 	00h				; black
 	mov		al,	' '
-	call	print
+	call	printxy
 
 	ret
 
 delay:
-	mov		cx,		10
-	delay_outter:
-		push	cx
-
-		mov		cx,		0ffffh
-		delay_innter:
-			nop
-			loop	delay_innter
-
-		pop		cx
-		loop	delay_outter
+	mov     cx,		01h
+	mov     dx,		0ffffh
+	mov     ah,		86h
+	int     15H
 	ret
 
 exit:
