@@ -1,6 +1,6 @@
 .model  tiny
 .data
-bullet  db 10 DUP(25)
+bullet  db 10 DUP(26)
 
 .code
 org     0100h
@@ -28,9 +28,9 @@ getch:
 mov     ah, 00h
 int     16h
 call    createBullet
-cmp     bullet[si], 25
+cmp     bullet[si], 26
 jne     @A
-mov     bullet[si], 24
+mov     bullet[si], 25
 @A:
 jmp     mainloop
 
@@ -39,42 +39,54 @@ inc     si
 drawbullet:
     cmp     si, 10
     je      enddrawbullet
-    cmp     bullet[si], 25
+    cmp     bullet[si], 26
     je      incsi
 
+    dec 	bullet[si]
     ;draw bullet
+    ;-------------------
+    ; set position di
+    ;-------------------
     push 	ax
     push 	dx
-
     mov 	ax, 80
     mov 	dl, bullet[si]
     mul 	dl
-    add 	ax, si
+    add 	ax, 14
+
+    push    ax
+    mov     ax, 6
+    mul     si
+    mov     dx, ax
+    pop     ax
+    add     ax, dx
+    
     mov 	dx, 2
     mul 	dx
     mov 	di, ax
-
     pop 	dx
     pop 	ax
-
+    ;-------------------
+    ; draw bullet
+    ;-------------------
     mov     al, 'A'
     mov 	ah, 0fh
     mov 	cx, 1
     rep 	stosw
-    
+    ;-------------------
+    ; delete bullet
+    ;-------------------
     add     di, 158
     mov     al, ' '
     mov 	ah, 0fh
     mov 	cx, 1
     rep 	stosw
     
-    
-    dec 	bullet[si]
-    cmp     bullet[si], -1
+    cmp     bullet[si], 0
     je      @b
     jmp     incsi
     @b:
-    mov     bullet[si], 25
+    mov     bullet[si], 26
     jmp     drawbullet
 
     enddrawbullet:
