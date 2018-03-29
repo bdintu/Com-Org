@@ -436,13 +436,18 @@ rand_char:
 	ret
 
 rand_rainpos:
-	mov		ax,		7
-	mov		dx,		seed
-	mul		dx
+	mov		ah,		00h
+	mov		ax,		seed
+	
+	mov		cx,		81
+	mul		cx
+	add		ax,		17
+
+	mov		cx,		80
 	xor		dx,		dx
-	mov		cx,		10
 	div		cx
-	add		dx,		1
+
+	mov		al,		dl
 	mov		seed,	dx
 	ret
 
