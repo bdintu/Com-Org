@@ -8,6 +8,7 @@ COL_N			equ		0ah
 .model	tiny
 
 .data
+	level 	dw 	0h
 	seed	dw	?
 	life	db	'9', 0fh
 
@@ -40,7 +41,7 @@ COL_N			equ		0ah
 			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
 			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
 			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
-			db '||         |#####|#####|#####|#####|#####|#####|#####|#####|#####|#####|      ||'
+			db '||         |## ##|## ##|## ##|## ##|## ##|## ##|## ##|## ##|## ##|## ##|      ||'
 			db '||         |  Q  |  W  |  E  |  R  |  T  |  Y  |  U  |  I  |  O  |  P  |      ||'
 			db '\\============================================================================//$'
 ;	pos		db '01234567890123456789012345678901234567890123456789012345678901234567890123456789'	
@@ -88,7 +89,7 @@ COL_N			equ		0ah
 			db '||                            Your score:                                     ||'
 			db '||                                                                            ||'
 			db '||                                                                            ||'
-			db '||                    Press Enter to go back to main menu                     ||'
+			db '||                        Press Enter to exit program                         ||'
 			db '||                                                                            ||'
 			db '||                                                                            ||'
 			db '||                                                                            ||'
@@ -101,12 +102,38 @@ main:
 	call	clrscr
 	call	hide_cursor
 
-; printxy_title        
+;print_mainS
 	mov		si,		00h
 	mov		dx,		00h
 	mov     ah,		0fh
 	mov     cx,		1
-	pritil:
+	printM:
+		mov     di,		dx
+		mov		al,		[titleS+si]
+		call	print
+		inc		si
+		add		dx,		2
+		cmp		si,		80*24
+		jne		printM
+	
+	mov 	level, 0ffffh	
+	mov 	di, 2446
+menu:
+	mov		ah,		00h
+	int		16h
+	call 	set_level
+	cmp 	al, 0dh							; enter ascii
+	jne		menu
+	cmp		level, 0h
+	je		menu
+endmenu:
+
+;print_gameS
+	mov		si,		00h
+	mov		dx,		00h
+	mov     ah,		0fh
+	mov     cx,		1
+	printG:
 		mov     di,		dx
 		mov		al,		[gameS+si]
 		call	print
@@ -114,15 +141,10 @@ main:
 		add		dx,		2
 	
 		cmp		si,		80*24
-		jne		pritil
+		jne		printG
 
 while1:	
 	call	delay
-
-	;mov		ah,		01h
-	;int		16h
-	;cmp		al,		1Bh						; isEsc
-	;je		exit_half
 
 	call	rand_rainpos					; ret seed
 	mov		si,			seed
@@ -176,6 +198,7 @@ while1:
 		jge		crash_inc
 
 		mov		al,		' '				; ret char to al
+		dec		rain[si]
 		call	print_rain
 
 		mov		rain[si],	DEFAULT_RAIN
@@ -325,6 +348,54 @@ ret
 exit_half:
 	jmp		exit
 
+
+set_level:
+	cmp		al, '1'
+	jne		@2
+	mov 	level, 0ffffh
+	mov 	di, 2446
+	jmp 	@4
+@2:	cmp 	al, '2'
+	jne		@3
+	mov 	level, 08fffh
+	mov 	di, 2606
+	jmp 	@4
+@3:	cmp		al, '3'
+	jne 	endset
+	mov		level, 04fffh
+	mov 	di, 2766
+	jmp 	@4
+@4:
+	push 	ax
+	push 	di
+	mov 	di, 2446
+	mov     al, ' '
+    mov 	ah, 0fh
+    mov 	cx, 1
+    rep 	stosw
+	mov 	di, 2606
+	mov     al, ' '
+    mov 	ah, 0fh
+    mov 	cx, 1
+    rep 	stosw
+	mov 	di, 2766
+	mov     al, ' '
+    mov 	ah, 0fh
+    mov 	cx, 1
+    rep 	stosw
+	pop 	di
+	pop 	ax
+
+	push 	ax
+    mov     al, '*'
+    mov 	ah, 0ah
+    mov 	cx, 1
+    rep 	stosw
+	pop 	ax
+
+endset:
+	ret
+
 hide_cursor:
 	mov		ch,		32
 	mov		ah,		01h
@@ -354,8 +425,8 @@ clrscr:
 ;	ret
 
 delay:
-	mov     cx,		01h
-	mov     dx,		0fffh
+	mov     cx,		00h
+	mov     dx,		level
 	mov     ah,		86h
 	int     15H
 	ret
@@ -458,5 +529,7 @@ print_rain:
 	ret
 
 exit:
+
+
 	ret
 	end		main
