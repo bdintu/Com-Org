@@ -1,5 +1,5 @@
 RAIN_SIZE		equ		0ah
-X_MAX			equ		25 + RAIN_SIZE
+X_MAX			equ		21 + RAIN_SIZE
 DEFAULT_RAIN	equ		-01h
 DEFAULT_BULLET	equ		21
 LIFE_POS		equ		2*(1*80 + 9)
@@ -108,7 +108,7 @@ main:
 	mov     cx,		1
 	pritil:
 		mov     di,		dx
-		mov		al,		gameS[si]
+		mov		al,		[gameS+si]
 		call	print
 		inc		si
 		add		dx,		2
@@ -172,15 +172,11 @@ while1:
 		mov		dh,		bullet[si]
 		mov		dl,		rain[si]
 		sub		dh,		dl				; bullet = bullet - rain
-		cmp		dh,		0h
-		jne		crash_inc
+		cmp		bullet[si],		dl
+		jge		crash_inc
 
 		mov		al,		' '				; ret char to al
 		call	print_rain
-
-		dec		life
-		call	chk_life
-		call	print_life	
 
 		mov		rain[si],	DEFAULT_RAIN
 		mov		bullet[si], DEFAULT_BULLET
