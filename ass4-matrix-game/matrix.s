@@ -1,6 +1,7 @@
 RAIN_SIZE		equ		0ah
 X_MAX			equ		25 + RAIN_SIZE
 DEFAULT_RAIN	equ		-01h
+DEFAULT_BULLET	equ		21
 LIFE_POS		equ		2*(1*80 + 9)
 
 .model	tiny
@@ -11,6 +12,8 @@ LIFE_POS		equ		2*(1*80 + 9)
 
 	rain_y	db	10	dup(DEFAULT_RAIN)
 	rain_x	db	14, 20, 26, 32, 38, 44, 50, 56, 62, 68
+
+	bullet_y	db	10 dup(DEFAULT_BULLET)
 
 	; ''.join([chr(i) for i in range(33, 127)])
 	alpha	db	'!#$%&\()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{|}'	; 90
@@ -134,9 +137,9 @@ while1:
 		cmp		rain_y[si],	DEFAULT_RAIN
 		je		rander_inc
 
-		mov		al,		'J'
 		call	print_rain
-		call	print_life		
+		call	chk_life
+		call	print_life	
 
 		inc		rain_y[si]
 	
@@ -180,12 +183,23 @@ getch:
 	int		16h
 	ret
 
+delay:
+	mov     cx,		01h
+	mov     dx,		0ffffh
+	mov     ah,		86h
+	int     15H
+	ret
+
+rand_char:
+	mov		al,		'J'
+	ret
+
 rand_rainpos:
 	mov		ax,		7
 	mov		dx,		seed
 	mul		dx
 	xor		dx,		dx
-	mov		cx,		90
+	mov		cx,		10
 	div		cx
 	add		dx,		1
 	mov		seed,	dx
@@ -210,6 +224,13 @@ printxy:								; get ax, dx
 	pop		dx
 	ret
 
+chk_life:
+	cmp		rain_y[si],	DEFAULT_BULLET
+	jne		exit_chk_life
+	dec		life
+	exit_chk_life:
+	ret
+
 print_life:
 	mov		ax,		word ptr life
 	mov		dx,		LIFE_POS
@@ -219,6 +240,8 @@ print_life:
 print_rain:
 	mov		dl,		rain_x[si]
 	mov		dh,		rain_y[si]
+
+	call	rand_char				; ret char to al
 
 	mov		ah, 	0fh				; white
 	call	printxy
@@ -264,13 +287,6 @@ print_rain:
 	mov		al,	' '
 	call	printxy
 
-	ret
-
-delay:
-	mov     cx,		01h
-	mov     dx,		0ffffh
-	mov     ah,		86h
-	int     15H
 	ret
 
 exit:
