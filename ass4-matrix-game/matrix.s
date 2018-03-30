@@ -31,8 +31,8 @@ COL_N			equ		0ah
 			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
 			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
 			db '||   Balm  |     |     |     |     |     |     |     |     |     |     |      ||'
-			db '||  Jay    |     |     |     |     |     |     |     |     |     |     |      ||'
-			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '||   &     |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '|| Jay     |     |     |     |     |     |     |     |     |     |     |      ||'
 			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
 			db '|| 0759    |     |     |     |     |     |     |     |     |     |     |      ||'
 			db '|| 0744    |     |     |     |     |     |     |     |     |     |     |      ||'
@@ -49,17 +49,16 @@ COL_N			equ		0ah
 ;	pos		db '01234567890123456789012345678901234567890123456789012345678901234567890123456789'	
 	titleS	db '//============================================================================\\'
 			db '||                                                                            ||'
+			db '||   OOOOO O           OOOO    OOOO                                           ||'
+			db '||     O   O   OOO    OOOOOO  OOOOOO                                          ||'
+			db '||     O   OOO OOO   OOOOOOOOOOOOOOOO              O           O  OOO    OOO  ||'
+			db '||     O   O O O    OOO     OO     OOO             O               OOO  OOO   ||'
+			db '||     O   O O OOO OOO              OOO    OOOOO OOOOO OO  OO  O    OOOOOO    ||'
+			db '||                OOO                OOO       O   O    O  O   O     OOOO     ||'
+			db '||               OOO                  OOO   OOOO   O     OO    O    OOOOOO    ||'
+			db '||              OOO                    OOO  O  O   O    O  O   O   OOO  OOO   ||'
+			db '||             OOO                      OOO OOOO   O     OO    O  OOO    OOO  ||'
 			db '||                                                                            ||'
-			db '||                     ___ _ __   __ _  ___ ___                               ||'
-			db '||                    / __| ''_ \ / _` |/ __/ _ \                              ||'
-			db '||                    \__ \ |_) | (_| | (_|  __/                              ||'
-			db '||                    |___/ .__/ \__,_|\___\___|                              ||'
-			db '||                        |_|         _                                       ||'
-			db '||                                   (_) __ _ _ __ ___                        ||'
-			db '||                                   | |/ _` | ''_ ` _ \                       ||'
-			db '||                                   | | (_| | | | | | |                      ||'
-			db '||                                  _/ |\__,_|_| |_| |_|                      ||'
-			db '||                                 |__/                                       ||'
 			db '||                                                                            ||'
 			db '||                  press key numbber                                         ||'
 			db '||                                                                            ||'
@@ -69,6 +68,7 @@ COL_N			equ		0ah
 			db '||                       4 EXIT                                               ||'
 			db '||                                                                            ||'
 			db '||                                                                            ||'
+			db '||                                                                            ||'			
 			db '||                                                                            ||'
 			db '\\============================================================================//$'
 		   
@@ -76,16 +76,16 @@ COL_N			equ		0ah
 			db '||                                                                            ||'
 			db '||                                                                            ||'
 			db '||                                                                            ||'
-			db '||                      ____                                                  ||'
-			db '||                     / ___| __ _ _ __ ___   ___                             ||'
-			db '||                    | |  _ / _` | ''_ ` _ \ / _ \                            ||'
-			db '||                    | |_| | (_| | | | | | |  __/                            ||'
-			db '||                     \____|\__,_|_| |_| |_|\___|                            ||'
-			db '||                                    ___                                     ||'
-			db '||                                   / _ \__   _____ _ __                     ||'
-			db '||                                  | | | \ \ / / _ \ ''__|                    ||'
-			db '||                                  | |_| |\ V /  __/ |                       ||'
-			db '||                                   \___/  \_/ \___|_|                       ||'
+			db '||                                                                            ||'
+			db '||        OOOOOO                    OO  OOOOOO                                ||'
+			db '||        OOOOOOO                   OO OOOOOOO                   OOOOO        ||'
+			db '||        OO      OOOOO  OOOOO   OOOOO OO       OOOOO OO        OOOOOO        ||'
+			db '||        OO OOOO OOOOOO OOOOOO OOOOOO OO OOOO OOOOOO OOOO OOOO OO  OO        ||'
+			db '||        OO OOOO OO  OO OO  OO OO  OO OO OOOO     OO OOOOOOOOO OOOOOO        ||'
+			db '||        OO   OO OO  OO OO  OO OO  OO OO   OO OOO OO OO OOO OO OO            ||'
+			db '||        OOOOOOO OOOOOO OOOOOO OOOOOO OOOOOOO OOOOOO OO     OO OOOOO         ||'
+			db '||         OOOOOO  OOOOO  OOOOO OOOOO  OOOOOO  OOOOO  O       O OOOOOO        ||'
+			db '||                                                                            ||'
 			db '||                                                                            ||'
 			db '||                                                                            ||'
 			db '||                            Your score:                                     ||'
@@ -181,8 +181,6 @@ main:
 	mov 	cx, 1
 	rep 	stosw
 
-	call	titleSound
-
 menu:
 	mov		ah,		00h
 	int		16h
@@ -197,6 +195,7 @@ menu:
 
 endmenu:
 
+	call	titleSound
 ;print_gameS
 	mov		si,		00h
 	mov		dx,		00h
