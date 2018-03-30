@@ -10,9 +10,11 @@ COL_N			equ		0ah
 .data
 	level 	dw 	0h
 	seed	dw	?
+	seed_ch	dw	?
 	life	db	'9', 0fh
 
 	rain	db	10	dup(DEFAULT_RAIN)
+	rain_ch	db	10	dup('X')
 	lane	db	14, 20, 26, 32, 38, 44, 50, 56, 62, 68
 
 	bullet  db	10 DUP(DEFAULT_BULLET)
@@ -21,7 +23,7 @@ COL_N			equ		0ah
 	alpha	db	'!#$%&\()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{|}'	; 90
 
 	gameS	db '//=========|                                                           |======\\'
-			db '|| life: 9 |     |     |     |     |     |     |     |     |     |     |      ||'
+			db '|| life: _ |     |     |     |     |     |     |     |     |     |     |      ||'
 			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
 			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
 			db '||         |     |     |     |     |     |     |     |     |     |     |      ||'
@@ -106,7 +108,6 @@ main:
 	mov		si,		00h
 	mov		dx,		00h
 	mov     ah,		0fh
-	mov     cx,		1
 	printM:
 		mov     di,		dx
 		mov		al,		[titleS+si]
@@ -141,7 +142,6 @@ endmenu:
 	mov		si,		00h
 	mov		dx,		00h
 	mov     ah,		0fh
-	mov     cx,		1
 	printG:
 		mov     di,		dx
 		mov		al,		[gameS+si]
@@ -155,12 +155,17 @@ endmenu:
 while1:	
 	call	delay
 
-	call	rand_rainpos					; ret seed
+	call	rand_rain					; ret seed
 	mov		si,			seed
 	cmp		rain[si],	DEFAULT_RAIN
 	jne		rander_init
 	mov		rain[si],	DEFAULT_RAIN + 1
-	
+
+	call	rand_ch					; ret char to al
+	mov		bx,		seed_ch
+	mov		bl,		alpha[bx]
+	mov		rain_ch[si]	, bl
+
 	rander_init:
 		mov		si,		00h
 	rander_test:
@@ -169,16 +174,14 @@ while1:
 	rander_body:
 		cmp		rain[si],	DEFAULT_RAIN
 		je		rander_inc
-
-		call	rand_char				; ret char to al
+		
+		mov		al,		rain_ch[si]
 		call	print_rain
 
 		call	chk_life
-		
+		call	print_life	
 		cmp 	life, '0'
 		je 		exit_half
-
-		call	print_life	
 
 		inc		rain[si]
 	
@@ -436,11 +439,18 @@ print:							; get ax, dx
 	ret
 
 clrscr:
-	mov		ah,		0
+	mov		ah,		00h
 	mov		al,		' '
-	mov		cx,		80*25
-	mov		dx,		0
-	call	print
+	mov		si,		00h
+	mov		dx,		00h
+	loop_clrscr:
+		mov     di,		dx
+		call	print
+		inc		si
+		add		dx,		2
+		cmp		si,		80*24
+		jne		loop_clrscr
+	ret
 
 ;getch:
 ;	mov		ah,		01h
@@ -454,11 +464,7 @@ delay:
 	int     15H
 	ret
 
-rand_char:
-	mov		al,		'J'
-	ret
-
-rand_rainpos:
+rand_rain:
 	mov		ah,		00h
 	mov		ax,		seed
 	
@@ -470,8 +476,22 @@ rand_rainpos:
 	xor		dx,		dx
 	div		cx
 
-	mov		al,		dl
 	mov		seed,	dx
+	ret
+
+rand_ch:
+	mov		ah,		00h
+	mov		ax,		seed_ch
+	
+	mov		cx,		91
+	mul		cx
+	add		ax,		17
+
+	mov		cx,		90
+	xor		dx,		dx
+	div		cx
+
+	mov		seed_ch,	dx
 	ret
 
 printxy:								; get ax, dx
@@ -561,7 +581,6 @@ exit:
 	mov		si,		00h
 	mov		dx,		00h
 	mov     ah,		0fh
-	mov     cx,		1
 	printO:
 		mov     di,		dx
 		mov		al,		[overS+si]
@@ -574,5 +593,6 @@ exit:
 
 	mov 	ah, 00h
 	int 	16h
+
 	ret
 	end		main
