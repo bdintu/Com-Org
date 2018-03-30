@@ -118,6 +118,11 @@ main:
 	
 	mov 	level, 0ffffh	
 	mov 	di, 2446
+	mov     al, '*'
+	mov 	ah, 0fh
+	mov 	cx, 1
+	rep 	stosw
+
 menu:
 	mov		ah,		00h
 	int		16h
@@ -126,6 +131,10 @@ menu:
 	jne		menu
 	cmp		level, 0h
 	je		menu
+	cmp 	level, 0aaaah
+	jne 	endmenu
+	ret
+
 endmenu:
 
 ;print_gameS
@@ -165,6 +174,10 @@ while1:
 		call	print_rain
 
 		call	chk_life
+		
+		cmp 	life, '0'
+		je 		exit_half
+
 		call	print_life	
 
 		inc		rain[si]
@@ -209,10 +222,17 @@ while1:
 goto_while1:
 	jmp		while1
 
+exit_half:
+	jmp		exit
+
 getch:
 	mov     ah, 00h
 	int     16h
 	call    createBullet
+	cmp 	al, 27
+	jne		notesc
+	ret
+	notesc:
 	cmp     bullet[si], DEFAULT_BULLET
 	jne     @A
 	mov     bullet[si], DEFAULT_BULLET -1
@@ -341,60 +361,63 @@ createBullet:
     cmp     al, 'p'
     jne     endcreateBullet
     mov     si, 9
-
     endcreateBullet:
-ret
-
-exit_half:
-	jmp		exit
-
+	ret
 
 set_level:
-	cmp		al, '1'
-	jne		@2
-	mov 	level, 0ffffh
-	mov 	di, 2446
-	jmp 	@4
-@2:	cmp 	al, '2'
-	jne		@3
-	mov 	level, 08fffh
-	mov 	di, 2606
-	jmp 	@4
-@3:	cmp		al, '3'
-	jne 	endset
-	mov		level, 04fffh
-	mov 	di, 2766
-	jmp 	@4
-@4:
-	push 	ax
-	push 	di
-	mov 	di, 2446
-	mov     al, ' '
-    mov 	ah, 0fh
-    mov 	cx, 1
-    rep 	stosw
-	mov 	di, 2606
-	mov     al, ' '
-    mov 	ah, 0fh
-    mov 	cx, 1
-    rep 	stosw
-	mov 	di, 2766
-	mov     al, ' '
-    mov 	ah, 0fh
-    mov 	cx, 1
-    rep 	stosw
-	pop 	di
-	pop 	ax
+		cmp		al, '1'
+		jne		@2
+		mov 	level, 0ffffh
+		mov 	di, 2446
+		jmp 	@5
+	@2:	cmp 	al, '2'
+		jne		@3
+		mov 	level, 08fffh
+		mov 	di, 2606
+		jmp 	@5
+	@3:	cmp		al, '3'
+		jne 	@4
+		mov		level, 04fffh
+		mov 	di, 2766
+		jmp 	@5
+	@4: cmp		al, '4'
+		jne 	endset
+		mov		level, 0aaaah
+		mov 	di, 2926
+	@5:
+		push 	ax
+		push 	di
+		mov 	di, 2446
+		mov     al, ' '
+		mov 	ah, 0fh
+		mov 	cx, 1
+		rep 	stosw
+		mov 	di, 2606
+		mov     al, ' '
+		mov 	ah, 0fh
+		mov 	cx, 1
+		rep 	stosw
+		mov 	di, 2766
+		mov     al, ' '
+		mov 	ah, 0fh
+		mov 	cx, 1
+		rep 	stosw
+		mov 	di, 2926
+		mov     al, ' '
+		mov 	ah, 0fh
+		mov 	cx, 1
+		rep 	stosw
+		pop 	di
+		pop 	ax
 
-	push 	ax
-    mov     al, '*'
-    mov 	ah, 0ah
-    mov 	cx, 1
-    rep 	stosw
-	pop 	ax
-
-endset:
-	ret
+		push 	ax
+		mov     al, '*'
+		mov 	ah, 0ah
+		mov 	cx, 1
+		rep 	stosw
+		pop 	ax
+	endset:
+		ret
 
 hide_cursor:
 	mov		ch,		32
@@ -534,7 +557,22 @@ print_rain:
 	ret
 
 exit:
+;print_gameO
+	mov		si,		00h
+	mov		dx,		00h
+	mov     ah,		0fh
+	mov     cx,		1
+	printO:
+		mov     di,		dx
+		mov		al,		[overS+si]
+		call	print
+		inc		si
+		add		dx,		2
+	
+		cmp		si,		80*24
+		jne		printO
 
-
+	mov 	ah, 00h
+	int 	16h
 	ret
 	end		main
