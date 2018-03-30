@@ -97,6 +97,63 @@ COL_N			equ		0ah
 			db '||                                                                            ||'
 			db '\\============================================================================//$'
 
+	titleB	dw 1175, 4
+			dw 1075, 4
+			dw 1875, 8
+			dw 1568, 8
+			dw 1397, 16
+			dw 1175, 4
+			dw 1175, 4
+			dw 1618, 8
+			dw 1308, 8
+			dw 1675, 8
+			dw 1260, 8
+			dw 1568, 16
+			dw 1675, 4
+			dw 1165, 4
+			dw 2349, 8
+			dw 2975, 8
+			dw 1568, 8
+			dw 1797, 8
+			dw 1718, 8
+			dw 2047, 4
+			dw 2047, 4
+			dw 1975, 8
+			dw 1568, 8
+			dw 1760, 8
+			dw 1568, 16
+			dw  00h,00h
+			
+	overB	dw 1568, 8
+			dw 1165, 4
+			dw 2349, 8
+			dw 2975, 8
+			dw 2047, 4
+			dw 2047, 4
+			dw 1075, 4
+			dw 1875, 8
+			dw 1975, 8
+			dw 1568, 8
+			dw 1397, 16
+			dw 1175, 4
+			dw 1175, 4
+			dw 1568, 8
+			dw 1797, 8
+			dw 1718, 8
+			dw 1175, 4
+			dw 1618, 8
+			dw 1308, 8
+			dw 1675, 8
+			dw 1260, 8
+			dw 1568, 16
+			dw 1675, 4
+			dw 1760, 8
+			dw 1568, 16
+			dw  00h,00h
+			
+	shootB	dw 1175, 1
+			dw  00h,00h		
+
 .code
 	org		0100h
 main:
@@ -110,7 +167,7 @@ main:
 	mov     ah,		0fh
 	printM:
 		mov     di,		dx
-		mov		al,		[titleS+si]
+		mov		al,		titleS[si]
 		call	print
 		inc		si
 		add		dx,		2
@@ -123,6 +180,8 @@ main:
 	mov 	ah, 0fh
 	mov 	cx, 1
 	rep 	stosw
+
+	call	titleSound
 
 menu:
 	mov		ah,		00h
@@ -144,7 +203,7 @@ endmenu:
 	mov     ah,		0fh
 	printG:
 		mov     di,		dx
-		mov		al,		[gameS+si]
+		mov		al,		gameS[si]
 		call	print
 		inc		si
 		add		dx,		2
@@ -242,12 +301,83 @@ getch:
 	@A:
 	jmp     main_bullet
 
+
+titleSound:                             ; start sound
+  
+       
+        mov  si, offset titleB
+
+        mov  dx,61h                  ; turn speaker on
+        in   al,dx                   ;
+        or   al,03h                  ;
+        out  dx,al                   ;
+        mov  dx,43h                  ; get the timer ready
+        mov  al,0B6h                 ;
+        out  dx,al                   ;
+
+LoopIt:
+		lodsw                        ; load desired freq.
+        or   ax,ax                   ; if freq. = 0 then done
+        jz   short LDone             ;
+        mov  dx,42h                  ; port to out
+        out  dx,al                   ; out low order
+        xchg ah,al                   ;
+        out  dx,al                   ; out high order
+        lodsw                        ; get duration
+        mov  cx,ax                   ; put it in cx (16 = 1 second)
+        call PauseIt                 ; pause it
+        jmp  short LoopIt
+
+LDone:
+		mov  dx,61h                  ; turn speaker off
+        in   al,dx                   ;
+        and  al,0FCh                 ;
+        out  dx,al                   ;
+		ret
+
+PauseIt:                                ; some delay
+        mov    ah, 86h
+        mov    dx, 00h
+        int    15h
+		ret
+
+overSound:                              ; game over sound
+
+        mov  si, offset overB
+
+        mov  dx,61h                  ; turn speaker on
+        in   al,dx                   ;
+        or   al,03h                  ;
+        out  dx,al                   ;
+        mov  dx,43h                  ; get the timer ready
+        mov  al,0B6h                 ;
+        out  dx,al                   ;
+
+        call   LoopIt
+        ret
+
+shootSound:                             ; shoot sound
+
+		mov  si, offset shootB
+
+		mov  dx,61h                  ; turn speaker on
+		in   al,dx                   ;
+		or   al,03h                  ;
+		out  dx,al                   ;
+		mov  dx,43h                  ; get the timer ready
+		mov  al,0B6h                 ;
+		out  dx,al                   ;
+
+		call   LoopIt
+		ret
+       
+
 incsi:
 inc     si
 drawbullet:
     cmp     si, 10
     je      enddrawbullet
-    cmp     bullet[si], DeFAULT_BULLET
+    cmp     bullet[si], DEFAULT_BULLET
     je      incsi
 
     dec 	bullet[si]
@@ -431,6 +561,7 @@ hide_cursor:
 set_videoram:
 	mov		ax,		0b800h
 	mov		es,		ax
+	ret
 	
 print:							; get ax, dx
 	mov     di,		dx
@@ -517,6 +648,10 @@ chk_life:
 	cmp		rain[si],	DEFAULT_BULLET
 	jne		exit_chk_life
 	dec		life
+
+	
+
+
 	exit_chk_life:
 	ret
 
@@ -583,13 +718,15 @@ exit:
 	mov     ah,		0fh
 	printO:
 		mov     di,		dx
-		mov		al,		[overS+si]
+		mov		al,		overS[si]
 		call	print
 		inc		si
 		add		dx,		2
 	
 		cmp		si,		80*24
 		jne		printO
+		
+	call	overSound
 
 	mov 	ah, 00h
 	int 	16h
