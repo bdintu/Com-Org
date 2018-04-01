@@ -298,12 +298,10 @@ getch:
 	jne     @A
 	mov     bullet[si], DEFAULT_BULLET -1
 	@A:
+	call	shootSound
 	jmp     main_bullet
 
-
 titleSound:                             ; start sound
-  
-       
         mov  si, offset titleB
 
         mov  dx,61h                  ; turn speaker on
@@ -356,20 +354,30 @@ overSound:                              ; game over sound
         ret
 
 shootSound:                             ; shoot sound
+		mov      	al, 182         	; meaning that we're about to load
+    	out       	43h, al         	; a new countdown value
+    	mov      	ax, 1800		; countdown value is stored in ax. It is calculated by
+                            			; dividing 1193180 by the desired frequency (with the
+                            			; number being the frequency at which the main system
+                            			; oscillator runs
+    	out     	42h, al        		; Output low byte.
+    	mov     	al, ah          		; Output high byte.
+    	out     	42h, al               
+    	in		al, 61h
+                           			; to connect the speaker to timer 2
+    	or      	al, 00000011b
+    	out     	61h, al        	 	; Send the new value
 
-		mov  si, offset shootB
+	mov cx, 1000
+	delay_sad1:
+		shr dl, 15
+	loop delay_sad1
 
-		mov  dx,61h                  ; turn speaker on
-		in   al,dx                   ;
-		or   al,03h                  ;
-		out  dx,al                   ;
-		mov  dx,43h                  ; get the timer ready
-		mov  al,0B6h                 ;
-		out  dx,al                   ;
-
-		call   LoopIt
-		ret
-       
+		mov  	dx,61h                  	; turn speaker off
+        in   	al,dx                   
+        and  	al,0FCh                 
+        out  	dx,al
+	ret
 
 incsi:
 inc     si
