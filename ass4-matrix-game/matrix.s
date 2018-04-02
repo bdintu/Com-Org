@@ -14,7 +14,7 @@ COL_N			equ		0ah
 	life	db	'9', 0fh
 
 	rain	db	10	dup(DEFAULT_RAIN)
-	rain_ch	db	10	dup('X')
+	rain_ch	db	10	dup(00h)
 	lane	db	14, 20, 26, 32, 38, 44, 50, 56, 62, 68
 
 	bullet  db	10 DUP(DEFAULT_BULLET)
@@ -97,58 +97,58 @@ COL_N			equ		0ah
 			db '||                                                                            ||'
 			db '\\============================================================================//$'
 
-	titleB	dw 1175, 4
-			dw 1075, 4
-			dw 1875, 8
-			dw 1568, 8
-			dw 1397, 8
-			dw 1175, 4
-			dw 1175, 4
-			dw 1618, 8
-			dw 1308, 8
-			dw 1675, 8
-			dw 1260, 8
-			dw 1568, 8
+	titleB	dw 1175, 2
+			dw 1075, 2
+			dw 1875, 4
+			dw 1568, 4
+			dw 1397, 4
+			dw 1175, 2
+			dw 1175, 2
+			dw 1618, 4
+			dw 1308, 4
 			dw 1675, 4
-			dw 1165, 4
-			dw 2349, 8
-			dw 2975, 8
-			dw 1568, 8
-			dw 1797, 8
-			dw 1718, 8
-			dw 2047, 4
-			dw 2047, 4
-			dw 1975, 8
-			dw 1568, 8
-			dw 1760, 8
-			dw 1568, 8
+			dw 1260, 4
+			dw 1568, 4
+			dw 1675, 2
+			dw 1165, 2
+			dw 2349, 4
+			dw 2975, 4
+			dw 1568, 4
+			dw 1797, 4
+			dw 1718, 4
+			dw 2047, 2
+			dw 2047, 2
+			dw 1975, 4
+			dw 1568, 4
+			dw 1760, 4
+			dw 1568, 4
 			dw  00h,00h
 			
-	overB	dw 1568, 8
-			dw 1165, 4
-			dw 2349, 8
-			dw 2975, 8
-			dw 2047, 4
-			dw 2047, 4
-			dw 1075, 4
-			dw 1875, 8
-			dw 1975, 8
-			dw 1568, 8
-			dw 1397, 8
-			dw 1175, 4
-			dw 1175, 4
-			dw 1568, 8
-			dw 1797, 8
-			dw 1718, 8
-			dw 1175, 4
-			dw 1618, 8
-			dw 1308, 8
-			dw 1675, 8
-			dw 1260, 8
-			dw 1568, 8
+	overB	dw 1568, 4
+			dw 1165, 2
+			dw 2349, 4
+			dw 2975, 4
+			dw 2047, 2
+			dw 2047, 2
+			dw 1075, 2
+			dw 1875, 4
+			dw 1975, 4
+			dw 1568, 4
+			dw 1397, 4
+			dw 1175, 2
+			dw 1175, 2
+			dw 1568, 4
+			dw 1797, 4
+			dw 1718, 4
+			dw 1175, 2
+			dw 1618, 4
+			dw 1308, 4
 			dw 1675, 4
-			dw 1760, 8
-			dw 1568, 8
+			dw 1260, 4
+			dw 1568, 4
+			dw 1675, 2
+			dw 1760, 4
+			dw 1568, 4
 			dw  00h,00h
 
 .code
@@ -174,7 +174,7 @@ main:
 	mov 	level, 0ffffh	
 	mov 	di, 2446
 	mov     al, '*'
-	mov 	ah, 0fh
+	mov 	ah, 02h
 	mov 	cx, 1
 	rep 	stosw
 
@@ -187,13 +187,10 @@ menu:
 	cmp		level, 0h
 	je		menu
 	cmp 	level, 0aaaah
-	jne 	endmenu
+	jne 	print_gameS
 	ret
 
-endmenu:
-
-	call	titleSound
-;print_gameS
+print_gameS:
 	mov		si,		00h
 	mov		dx,		00h
 	mov     ah,		0fh
@@ -206,6 +203,8 @@ endmenu:
 	
 		cmp		si,		80*24
 		jne		printG
+
+	call	titleSound
 
 while1:	
 	call	delay
@@ -354,7 +353,7 @@ overSound:                              ; game over sound
 shootSound:                             ; shoot sound
 		mov      	al, 182         	; meaning that we're about to load
     	out       	43h, al         	; a new countdown value
-    	mov      	ax, 4000		; countdown value is stored in ax. It is calculated by
+    	mov      	ax, 2000		; countdown value is stored in ax. It is calculated by
                             			; dividing 1193180 by the desired frequency (with the
                             			; number being the frequency at which the main system
                             			; oscillator runs
@@ -380,7 +379,7 @@ shootSound:                             ; shoot sound
 crachSound:                             ; shoot sound
 		mov      	al, 182         	; meaning that we're about to load
     	out       	43h, al         	; a new countdown value
-    	mov      	ax, 1000		; countdown value is stored in ax. It is calculated by
+    	mov      	ax, 800		; countdown value is stored in ax. It is calculated by
                             			; dividing 1193180 by the desired frequency (with the
                             			; number being the frequency at which the main system
                             			; oscillator runs
@@ -576,7 +575,7 @@ set_level:
 
 		push 	ax
 		mov     al, '*'
-		mov 	ah, 0ah
+		mov 	ah, 02h
 		mov 	cx, 1
 		rep 	stosw
 		pop 	ax
@@ -734,7 +733,7 @@ print_rain:
 	ret
 
 exit:
-;print_gameO
+; print_over
 	mov		si,		00h
 	mov		dx,		00h
 	mov     ah,		0fh
