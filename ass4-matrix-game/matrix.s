@@ -88,7 +88,7 @@ COL_N			equ		0ah
 			db '||                                                                            ||'
 			db '||                                                                            ||'
 			db '||                                                                            ||'
-			db '||                            Your score:                                     ||'
+			db '||                                                                            ||'
 			db '||                                                                            ||'
 			db '||                                                                            ||'
 			db '||                        Press Enter to exit program                         ||'
@@ -101,14 +101,14 @@ COL_N			equ		0ah
 			dw 1075, 4
 			dw 1875, 8
 			dw 1568, 8
-			dw 1397, 16
+			dw 1397, 8
 			dw 1175, 4
 			dw 1175, 4
 			dw 1618, 8
 			dw 1308, 8
 			dw 1675, 8
 			dw 1260, 8
-			dw 1568, 16
+			dw 1568, 8
 			dw 1675, 4
 			dw 1165, 4
 			dw 2349, 8
@@ -121,7 +121,7 @@ COL_N			equ		0ah
 			dw 1975, 8
 			dw 1568, 8
 			dw 1760, 8
-			dw 1568, 16
+			dw 1568, 8
 			dw  00h,00h
 			
 	overB	dw 1568, 8
@@ -134,7 +134,7 @@ COL_N			equ		0ah
 			dw 1875, 8
 			dw 1975, 8
 			dw 1568, 8
-			dw 1397, 16
+			dw 1397, 8
 			dw 1175, 4
 			dw 1175, 4
 			dw 1568, 8
@@ -145,14 +145,11 @@ COL_N			equ		0ah
 			dw 1308, 8
 			dw 1675, 8
 			dw 1260, 8
-			dw 1568, 16
+			dw 1568, 8
 			dw 1675, 4
 			dw 1760, 8
-			dw 1568, 16
+			dw 1568, 8
 			dw  00h,00h
-			
-	shootB	dw 1175, 1
-			dw  00h,00h		
 
 .code
 	org		0100h
@@ -274,6 +271,7 @@ while1:
 		mov		al,		' '				; ret char to al
 		dec		rain[si]
 		call	print_rain
+		call	crachSound
 
 		mov		rain[si],	DEFAULT_RAIN
 		mov		bullet[si], DEFAULT_BULLET
@@ -356,7 +354,7 @@ overSound:                              ; game over sound
 shootSound:                             ; shoot sound
 		mov      	al, 182         	; meaning that we're about to load
     	out       	43h, al         	; a new countdown value
-    	mov      	ax, 1800		; countdown value is stored in ax. It is calculated by
+    	mov      	ax, 4000		; countdown value is stored in ax. It is calculated by
                             			; dividing 1193180 by the desired frequency (with the
                             			; number being the frequency at which the main system
                             			; oscillator runs
@@ -372,6 +370,32 @@ shootSound:                             ; shoot sound
 	delay_sad1:
 		shr dl, 15
 	loop delay_sad1
+
+		mov  	dx,61h                  	; turn speaker off
+        in   	al,dx                   
+        and  	al,0FCh                 
+        out  	dx,al
+	ret
+
+crachSound:                             ; shoot sound
+		mov      	al, 182         	; meaning that we're about to load
+    	out       	43h, al         	; a new countdown value
+    	mov      	ax, 1000		; countdown value is stored in ax. It is calculated by
+                            			; dividing 1193180 by the desired frequency (with the
+                            			; number being the frequency at which the main system
+                            			; oscillator runs
+    	out     	42h, al        		; Output low byte.
+    	mov     	al, ah          		; Output high byte.
+    	out     	42h, al               
+    	in		al, 61h
+                           			; to connect the speaker to timer 2
+    	or      	al, 00000011b
+    	out     	61h, al        	 	; Send the new value
+
+	mov cx, 4000
+	delay_sad2:
+		shr dl, 15
+	loop delay_sad2
 
 		mov  	dx,61h                  	; turn speaker off
         in   	al,dx                   
@@ -415,7 +439,7 @@ drawbullet:
     ; draw bullet
     ;-------------------
     mov     al, 'A'
-    mov 	ah, 0fh
+    mov 	ah, 04h
     mov 	cx, 1
     rep 	stosw
     ;-------------------
@@ -590,11 +614,6 @@ clrscr:
 		jne		loop_clrscr
 	ret
 
-;getch:
-;	mov		ah,		01h
-;	int		16h
-;	ret
-
 delay:
 	mov     cx,		00h
 	mov     dx,		level
@@ -655,10 +674,6 @@ chk_life:
 	cmp		rain[si],	DEFAULT_BULLET
 	jne		exit_chk_life
 	dec		life
-
-	
-
-
 	exit_chk_life:
 	ret
 
